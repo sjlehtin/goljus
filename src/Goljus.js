@@ -1,6 +1,7 @@
 /* esversion: 6 */
 
 import React, { Component } from 'react';
+import './Goljus.css';
 
 /*
 From Wikipedia (https://en.wikipedia.org/wiki/Conway's_Game_of_Life):
@@ -35,26 +36,68 @@ class Goljus extends Component {
             throw new Error(`height needs to be at least 2, was ${height}`);
         }
 
-        let board = new Array(width);
-        for (let ii = 0; ii < width; ii++) {
-            board[ii] = new Array(height).fill(false);
+        let board;
+        if (this.props.seed) {
+            if (typeof(this.props.seed) === "string") {
+                let mm = this.props.seed.match(/random:(.*)%/);
+                if (mm) {
+                    let rate = parseFloat(mm[1])/100;
+                    board = Goljus.createBoard(width, height,
+                        (ii, jj) => { return Goljus.randomInitializer(ii, jj, rate); });
+                } else if (this.props.seed === "random") {
+                    board = Goljus.createBoard(width, height,
+                                               Goljus.randomInitializer);
+                } else {
+                    throw Error("invalid seed, should be one of [random, random:<perc>%]");
+                }
+            } else if (typeof(this.props.seed) === "function") {
+                board = Goljus.createBoard(width, height,
+                                           this.props.seed);
+            } else {
+                board = this.props.seed;
+            }
+        } else {
+            board = Goljus.createBoard(width, height);
         }
-
-        this.state = {board: Goljus.createBoard(width, height),
-                      width: width, height: height};
+        this.state = {board: board, width: width, height: height};
         if (this.props.period) {
-            setTimeout(() => { this._timerHandler() }, this.props.period);
+            this.scheduleNextTick();
         }
+    }
+
+    componentWillUnmount() {
+        console.log("canceling timeout", this._timeout);
+        clearTimeout(this._timeout);
+    }
+
+    static randomInitializer(ii, jj, rate) {
+        if (!rate) {
+            rate = 0.5;
+        }
+        return Math.random() < rate;
     }
 
     _timerHandler() {
         this.tick();
+        this.scheduleNextTick();
     }
 
-    static createBoard(width, height) {
+    scheduleNextTick() {
+        this._timeout = setTimeout(() => {
+            this._timerHandler()
+        }, this.props.period);
+    }
+
+    static createBoard(width, height, initializer) {
         let board = new Array(width);
         for (let ii = 0; ii < width; ii++) {
             board[ii] = new Array(height).fill(false);
+
+            if (initializer) {
+                for (let jj = 0; jj < height; jj++) {
+                    board[ii][jj] = initializer(ii, jj);
+                }
+            }
         }
         board.width = width;
         board.height = height;
@@ -115,18 +158,37 @@ class Goljus extends Component {
     }
 
     tick() {
-        console.log("Advancing state");
         this.setState({board: Goljus.updateBoard(this.state.board)});
     }
 
     render() {
-        return <div />;
+        let rows = [];
+        for (let ii = 0; ii < this.state.board.width; ii++) {
+            let cells = [];
+            for (let jj = 0; jj < this.state.board.height; jj++) {
+                let live = this.state.board[ii][jj];
+                cells.push(<td key={`cell-${ii}-${jj}`} className={live ? "live" : ''}>{live ? "o" : "."}</td>);
+            }
+            rows.push(<tr key={ii}>{cells}</tr>);
+        }
+        let extraProps = {};
+        if (this.props.onClick) {
+            extraProps.onClick = (e) => {this.props.onClick(e)};
+        }
+        return <table className="Goljus-table" {...extraProps}>
+            <tbody>
+            {rows}
+            </tbody>
+        </table>;
     }
 }
 
 Goljus.propTypes = {
     shape: React.PropTypes.string,
-    period: React.PropTypes.number
+    period: React.PropTypes.number,
+    seed: React.PropTypes.oneOfType([React.PropTypes.string,
+        React.PropTypes.array,
+        React.PropTypes.func])
 };
 
 Goljus.defaultProps = {shape: "30,30"}

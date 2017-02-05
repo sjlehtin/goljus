@@ -1,0 +1,27 @@
+
+.Goljus-table {
+    width: 100%;
+    height: auto;
+    border-collapse: collapse;
+}
+
+.Goljus-table td {
+    border: 1px solid black;
+    width: 10px;
+    height: 20px;
+    padding: 0;
+    margin: 0 0;
+    color: white;
+    background: white;
+}
+
+.Goljus-table .live {
+    background: black;
+    color: black;
+    animation: fadein 300ms;
+}
+
+@keyframes fadein {
+    from { color: white; background: white; }
+    to   { color: black; background: black; }
+}

@@ -222,8 +222,9 @@ it('allows setting an update period', () => {
     goljus.tick = jest.fn(goljus.tick);
 
     expect(setTimeout).toBeCalledWith(expect.any(Function), 500);
+    expect(setTimeout.mock.calls.length).toEqual(1);
 
-    jest.runAllTimers();
+    jest.runOnlyPendingTimers();
 
     expect(goljus.tick).toBeCalled();
 
@@ -233,4 +234,57 @@ it('allows setting an update period', () => {
     expectedBoard[2][2] = true;
 
     expect(goljus.getBoard()).toBeSimilarWithBoard(expectedBoard);
+
+    expect(setTimeout.mock.calls.length).toEqual(2);
+});
+
+it('allows setting seed', () => {
+    let board = Goljus.createBoard(5, 5);
+    board[1][1] = true;
+    board[1][2] = true;
+    board[1][3] = true;
+    let goljus = TestUtils.renderIntoDocument(<Goljus shape="5,5" seed={board} />);
+    let newBoard = goljus.getBoard();
+    expect(newBoard).toBeSimilarWithBoard(board);
+});
+
+it('allows setting random seed', () => {
+    let goljus = TestUtils.renderIntoDocument(<Goljus shape="5,5" seed="random" />);
+    let newBoard = goljus.getBoard();
+    expect(newBoard.height).toEqual(5);
+});
+
+it('allows setting random seed with a custom random value', () => {
+    let spy = jest.fn(Goljus.randomInitializer);
+    Goljus.randomInitializer = spy;
+    let goljus = TestUtils.renderIntoDocument(<Goljus shape="5,5" seed="random:30%" />);
+    expect(spy).toBeCalledWith(expect.any(Number), expect.any(Number), 0.3);
+    let newBoard = goljus.getBoard();
+    expect(newBoard.height).toEqual(5);
+});
+
+it('allows setting custom seed initializer', () => {
+    const init = jest.fn((ii, jj) => true );
+    let goljus = TestUtils.renderIntoDocument(<Goljus shape="5,5" seed={init} />);
+    let expected = Goljus.createBoard(5, 5);
+    for (let ii = 0; ii < expected.width; ii++) {
+        for (let jj = 0; jj < expected.height; jj++) {
+            expected[ii][jj] = true;
+        }
+    }
+    expect(init).toBeCalledWith(0, 0);
+    expect(init).toBeCalledWith(4, 4);
+    expect(init.mock.calls.length).toEqual(25);
+    expect(goljus.getBoard()).toBeSimilarWithBoard(expected);
+});
+
+it('verifies seed argument', () => {
+    expect(() => { TestUtils.renderIntoDocument(<Goljus seed="invalid"/>);})
+        .toThrow(/invalid seed/);
+});
+
+it('renders a table', () => {
+    let goljus = TestUtils.renderIntoDocument(<Goljus shape="5,5" seed="random" />);
+    let table = TestUtils.findRenderedDOMComponentWithTag(goljus, 'table');
+    expect(table.querySelectorAll('td').length).toEqual(25);
 });
