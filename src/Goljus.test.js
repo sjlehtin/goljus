@@ -184,3 +184,27 @@ it('has an advancing control', () => {
     goljus.tick();
     expect(goljus.getBoard()).toBeSimilarWithBoard(oldBoard);
 });
+
+it('verifies shape argument', () => {
+    expect(() => {
+        TestUtils.renderIntoDocument(<Goljus shape="a"/>);
+    }).toThrow(/correct format/);
+
+    expect(() => {
+        TestUtils.renderIntoDocument(<Goljus shape="5,a"/>);
+    }).toThrow(/correct format/);
+
+    expect(() => {
+        TestUtils.renderIntoDocument(<Goljus shape="5"/>);
+    }).toThrow(/correct format/);
+});
+
+it('verifies shape to be large enough', () => {
+    expect(() => {
+        TestUtils.renderIntoDocument(<Goljus shape="1,3"/>);
+    }).toThrow(/width needs to be at least 2/);
+
+    expect(() => {
+        TestUtils.renderIntoDocument(<Goljus shape="3,1"/>);
+    }).toThrow(/height needs to be at least 2/);
+});

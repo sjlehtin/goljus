@@ -23,9 +23,16 @@ class Goljus extends Component {
     constructor(props) {
         super(props);
         let [width, height] = props.shape.split(',', 2).map((x) => { return parseInt(x) });
-        if (typeof(width) === "undefined" || typeof(height) === "undefined" ||
-            width === 0 || height === 0) {
+        if (isNaN(width) || isNaN(height)) {
             throw new Error("shape needs to be correct format and is mandatory");
+        }
+
+        if (width < 2) {
+            throw new Error(`width needs to be at least 2, was ${width}`);
+        }
+
+        if (height < 2) {
+            throw new Error(`height needs to be at least 2, was ${height}`);
         }
 
         let board = new Array(width);
