@@ -42,10 +42,16 @@ class Goljus extends Component {
 
         this.state = {board: Goljus.createBoard(width, height),
                       width: width, height: height};
+        if (this.props.period) {
+            setTimeout(() => { this._timerHandler() }, this.props.period);
+        }
+    }
+
+    _timerHandler() {
+        this.tick();
     }
 
     static createBoard(width, height) {
-        // TODO: if (width < 3)
         let board = new Array(width);
         for (let ii = 0; ii < width; ii++) {
             board[ii] = new Array(height).fill(false);
@@ -109,6 +115,7 @@ class Goljus extends Component {
     }
 
     tick() {
+        console.log("Advancing state");
         this.setState({board: Goljus.updateBoard(this.state.board)});
     }
 
@@ -116,6 +123,11 @@ class Goljus extends Component {
         return <div />;
     }
 }
+
+Goljus.propTypes = {
+    shape: React.PropTypes.string,
+    period: React.PropTypes.number
+};
 
 Goljus.defaultProps = {shape: "30,30"}
 

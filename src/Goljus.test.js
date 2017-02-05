@@ -5,6 +5,8 @@ import Goljus from './Goljus';
 
 const diff = require('jest-diff');
 
+jest.useFakeTimers();
+
 it('renders without crashing', () => {
     let goljus = TestUtils.renderIntoDocument(<Goljus />);
 });
@@ -207,4 +209,28 @@ it('verifies shape to be large enough', () => {
     expect(() => {
         TestUtils.renderIntoDocument(<Goljus shape="3,1"/>);
     }).toThrow(/height needs to be at least 2/);
+});
+
+it('allows setting an update period', () => {
+
+    let goljus = TestUtils.renderIntoDocument(<Goljus shape="5,5" period={500}/>);
+    let oldBoard = goljus.getBoard();
+    oldBoard[1][1] = true;
+    oldBoard[1][2] = true;
+    oldBoard[1][3] = true;
+
+    goljus.tick = jest.fn(goljus.tick);
+
+    expect(setTimeout).toBeCalledWith(expect.any(Function), 500);
+
+    jest.runAllTimers();
+
+    expect(goljus.tick).toBeCalled();
+
+    let expectedBoard = Goljus.createBoard(5, 5);
+    expectedBoard[0][2] = true;
+    expectedBoard[1][2] = true;
+    expectedBoard[2][2] = true;
+
+    expect(goljus.getBoard()).toBeSimilarWithBoard(expectedBoard);
 });
