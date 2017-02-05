@@ -90,7 +90,7 @@ it('can update the board', () => {
     expect(Goljus.updateBoard(oldBoard)).toEqual(oldBoard);
 });
 
-it('kills dead cells on update', () => {
+it('kills cells with too few neighbors on update', () => {
     let goljus = TestUtils.renderIntoDocument(<Goljus shape="5,5"/>);
     expect(Goljus.updateBoard).not.toBe(undefined);
     let oldBoard = goljus.getBoard();
@@ -98,6 +98,31 @@ it('kills dead cells on update', () => {
     let newBoard = Goljus.updateBoard(oldBoard);
     expect(newBoard).not.toBeSimilarWithBoard(oldBoard);
     expect(newBoard).toBeSimilarWithBoard(Goljus.createBoard(5, 5));
+});
+
+it('kills cells with too many neighbors on update', () => {
+    let goljus = TestUtils.renderIntoDocument(<Goljus shape="5,5"/>);
+    expect(Goljus.updateBoard).not.toBe(undefined);
+    let oldBoard = goljus.getBoard();
+    oldBoard[0][1] = true;
+    oldBoard[1][0] = true;
+    oldBoard[1][1] = true;
+    oldBoard[1][2] = true;
+    oldBoard[2][1] = true;
+    let newBoard = Goljus.updateBoard(oldBoard);
+    expect(newBoard).not.toBeSimilarWithBoard(oldBoard);
+    let expectedBoard = Goljus.createBoard(5, 5);
+    expectedBoard[0][0] = true;
+    expectedBoard[0][1] = true;
+    expectedBoard[0][2] = true;
+    expectedBoard[1][0] = true;
+    expectedBoard[1][1] = false;
+    expectedBoard[1][2] = true;
+    expectedBoard[2][0] = true;
+    expectedBoard[2][1] = true;
+    expectedBoard[2][2] = true;
+
+    expect(newBoard).toBeSimilarWithBoard(expectedBoard);
 });
 
 it('creates new cells on update', () => {
