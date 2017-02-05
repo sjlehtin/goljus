@@ -61,7 +61,7 @@ class Goljus extends Component {
         }
         this.state = {board: board, width: width, height: height};
         if (this.props.period) {
-            this.scheduleNextTick();
+            this._scheduleNextTick();
         }
     }
 
@@ -79,10 +79,10 @@ class Goljus extends Component {
 
     _timerHandler() {
         this.tick();
-        this.scheduleNextTick();
+        this._scheduleNextTick();
     }
 
-    scheduleNextTick() {
+    _scheduleNextTick() {
         this._timeout = setTimeout(() => {
             this._timerHandler()
         }, this.props.period);
@@ -191,6 +191,6 @@ Goljus.propTypes = {
         React.PropTypes.func])
 };
 
-Goljus.defaultProps = {shape: "30,30"}
+Goljus.defaultProps = {shape: "30,30"};
 
 export default Goljus;

@@ -4,20 +4,37 @@ import './App.css';
 import Goljus from './Goljus';
 
 class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <div className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h2>Welcome to React</h2>
-        </div>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
-          <Goljus shape="40,40"/>
-      </div>
-    );
-  }
+    constructor(props) {
+        super(props);
+        this.state = {generation: 0};
+    }
+
+    onGameClick() {
+        console.log("Game clicked");
+        this.setState({generation: this.state.generation + 1});
+    }
+
+    render() {
+        let foregroundStyle = {position: "absolute", width: "100%", height: "100%", zIndex: 1},
+            gameStyle = {position: "absolute", opacity: "0.1", width: "100%", zIndex: 0},
+            backgroundStyle = {position: "absolute", zIndex: -1, background: ""};
+
+        return (
+            <div className="App">
+                <div style={{height: "600px"}}>
+                    <div style={{position: "relative"}}>
+                        <div style={foregroundStyle}>
+                            <h1 className="App-header">Semeai Oy</h1>
+                        </div>
+                        <div style={gameStyle}>
+                            <Goljus shape="30,40" seed="random:30%" period={1500} key={this.state.generation} onClick={() => this.onGameClick()}/>
+                        </div>
+                        <div style={backgroundStyle}></div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 }
 
 export default App;
