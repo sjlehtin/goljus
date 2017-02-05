@@ -3,13 +3,15 @@ import ReactDOM from 'react-dom';
 import TestUtils from 'react-addons-test-utils';
 import Goljus from './Goljus';
 
+const diff = require('jest-diff');
+
 it('renders without crashing', () => {
     let goljus = TestUtils.renderIntoDocument(<Goljus />);
 });
 
 it('has current board state', () => {
     let goljus = TestUtils.renderIntoDocument(<Goljus />);
-    expect(goljus.state.board).not.toBe(undefined);
+    expect(goljus.state.board).toBeDefined();
 });
 
 it('has board state size that depends on props', () => {
@@ -30,17 +32,60 @@ it('has a board by default', () => {
     expect(goljus.state.board[0].length).toEqual(30);
 });
 
+function compareBoards(oldBoard, newBoard) {
+    if (oldBoard.width !== newBoard.width) {
+        return false;
+    }
+    if (oldBoard.height !== newBoard.height) {
+        return false;
+    }
+
+    for (let ii = 0; ii < oldBoard.width; ii++)   {
+        for (let jj = 0; jj < oldBoard.height; jj++) {
+            if (oldBoard[ii][jj] !== newBoard[ii][jj]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+expect.extend({
+  toBeSimilarWithBoard(received, expected) {
+    const pass = compareBoards(expected, received);
+    const message = pass
+      ? () => this.utils.matcherHint('.not.toBeSimilarWithBoard') + '\n\n' +
+        `Expected value to not be (using ===):\n` +
+        `  ${this.utils.printExpected(expected)}\n` +
+        `Received:\n` +
+        `  ${this.utils.printReceived(received)}`
+      : () => {
+        const diffString = diff(expected, received, {
+          expand: this.expand,
+        });
+        return this.utils.matcherHint('.toBeSimilarWithBoard') + '\n\n' +
+        `Expected value to be (using ===):\n` +
+        `  ${this.utils.printExpected(expected)}\n` +
+        `Received:\n` +
+        `  ${this.utils.printReceived(received)}` +
+        (diffString ? `\n\nDifference:\n\n${diffString}` : '');
+      };
+
+    return {actual: received, message, pass};
+  }
+});
+
 it('can give the board to a caller', () => {
     let goljus = TestUtils.renderIntoDocument(<Goljus shape="2,3"/>);
-    expect(goljus.getBoard).not.toBe(undefined);
-    expect(goljus.getBoard()).toEqual([
-        [false, false, false],
-        [false, false, false]])
+    expect(goljus.getBoard).toBeDefined();
+    expect(goljus.getBoard()).toBeSimilarWithBoard(Goljus.createBoard(2, 3));
+    expect(goljus.getBoard().height).toEqual(3);
+    expect(goljus.getBoard().width).toEqual(2);
 });
 
 it('can update the board', () => {
     let goljus = TestUtils.renderIntoDocument(<Goljus shape="5,5"/>);
-    expect(Goljus.updateBoard).not.toBe(undefined);
+    expect(Goljus.updateBoard).toBeDefined();
     let oldBoard = goljus.getBoard();
     expect(Goljus.updateBoard(oldBoard)).toEqual(oldBoard);
 });
@@ -51,8 +96,8 @@ it('kills dead cells on update', () => {
     let oldBoard = goljus.getBoard();
     oldBoard[2][2] = true;
     let newBoard = Goljus.updateBoard(oldBoard);
-    expect(newBoard).not.toEqual(oldBoard);
-    expect(newBoard).toEqual(Goljus.createBoard(5, 5));
+    expect(newBoard).not.toBeSimilarWithBoard(oldBoard);
+    expect(newBoard).toBeSimilarWithBoard(Goljus.createBoard(5, 5));
 });
 
 it('creates new cells on update', () => {
@@ -67,5 +112,50 @@ it('creates new cells on update', () => {
     expectedBoard[3][2] = true;
     expectedBoard[3][1] = true;
 
-    expect(newBoard).toEqual(expectedBoard);
+    expect(newBoard).toBeSimilarWithBoard(expectedBoard);
+});
+
+it('has stable square form', () => {
+    let oldBoard = Goljus.createBoard(5, 5);
+    oldBoard[0][0] = true;
+    oldBoard[4][4] = true;
+    oldBoard[0][4] = true;
+    oldBoard[4][0] = true;
+    let newBoard = Goljus.updateBoard(oldBoard);
+    expect(newBoard).toBeSimilarWithBoard(oldBoard);
+});
+
+it('has a cyclic form', () => {
+    let oldBoard = Goljus.createBoard(5, 5);
+    oldBoard[1][1] = true;
+    oldBoard[1][2] = true;
+    oldBoard[1][3] = true;
+    let newBoard = Goljus.updateBoard(oldBoard);
+    let expectedBoard = Goljus.createBoard(5, 5);
+    expectedBoard[0][2] = true;
+    expectedBoard[1][2] = true;
+    expectedBoard[2][2] = true;
+
+    expect(newBoard).toBeSimilarWithBoard(expectedBoard);
+    expect(Goljus.updateBoard(newBoard)).toBeSimilarWithBoard(oldBoard);
+});
+
+it('has an advancing control', () => {
+    let goljus = TestUtils.renderIntoDocument(<Goljus shape="5,5"/>);
+    let oldBoard = goljus.getBoard();
+    oldBoard[1][1] = true;
+    oldBoard[1][2] = true;
+    oldBoard[1][3] = true;
+
+    goljus.tick();
+
+    let expectedBoard = Goljus.createBoard(5, 5);
+    expectedBoard[0][2] = true;
+    expectedBoard[1][2] = true;
+    expectedBoard[2][2] = true;
+
+    expect(goljus.getBoard()).toBeSimilarWithBoard(expectedBoard);
+
+    goljus.tick();
+    expect(goljus.getBoard()).toBeSimilarWithBoard(oldBoard);
 });

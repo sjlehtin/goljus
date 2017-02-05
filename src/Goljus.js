@@ -38,10 +38,13 @@ class Goljus extends Component {
     }
 
     static createBoard(width, height) {
+        // TODO: if (width < 3)
         let board = new Array(width);
         for (let ii = 0; ii < width; ii++) {
             board[ii] = new Array(height).fill(false);
         }
+        board.width = width;
+        board.height = height;
         return board;
     }
 
@@ -49,8 +52,57 @@ class Goljus extends Component {
         return this.state.board;
     }
 
+    static countNeighbors(board, xcoord, ycoord) {
+        let numNeighbors = 0;
+        for (let [ii, jj] of [[-1, -1], [-1, 0], [-1, 1],
+                              [0, -1], [0, 1],
+                              [1, -1], [1, 0], [1, 1]]) {
+            let newX = xcoord + ii, newY = ycoord + jj;
+            newX %= board.width;
+            newY %= board.height;
+            if (newX < 0) {
+                newX += board.width;
+            }
+            if (newY < 0) {
+                newY += board.height;
+            }
+            if (board[newX][newY]) {
+                numNeighbors += 1;
+            }
+        }
+        return numNeighbors;
+    }
+
     static updateBoard(oldBoard) {
-        return Goljus.createBoard(oldBoard.length, oldBoard[0].length);
+        let newBoard = Goljus.createBoard(oldBoard.width, oldBoard.height);
+
+        for (let ii = 0; ii < oldBoard.width; ii++) {
+            for (let jj = 0; jj < oldBoard.height; jj++) {
+                let numNeighbors = Goljus.countNeighbors(oldBoard, ii, jj);
+                if (oldBoard[ii][jj]) {
+                    // Was alive.
+                    if (numNeighbors < 2) {
+                        newBoard[ii][jj] = false;
+                    } else if (numNeighbors > 3) {
+                        newBoard[ii][jj] = false;
+                    } else {
+                        newBoard[ii][jj] = true;
+                    }
+                } else {
+                    // Was dead.
+                    if (numNeighbors === 3) {
+                        newBoard[ii][jj] = true;
+                    } else {
+                        newBoard[ii][jj] = false;
+                    }
+                }
+            }
+        }
+        return newBoard;
+    }
+
+    tick() {
+        this.setState({board: Goljus.updateBoard(this.state.board)});
     }
 
     render() {
