@@ -2,6 +2,7 @@
 
 import React, { Component } from 'react';
 import './Goljus.css';
+import PropTypes from 'prop-types';
 
 /*
 From Wikipedia (https://en.wikipedia.org/wiki/Conway's_Game_of_Life):
@@ -184,11 +185,11 @@ class Goljus extends Component {
 }
 
 Goljus.propTypes = {
-    shape: React.PropTypes.string,
-    period: React.PropTypes.number,
-    seed: React.PropTypes.oneOfType([React.PropTypes.string,
-        React.PropTypes.array,
-        React.PropTypes.func])
+    shape: PropTypes.string,
+    period: PropTypes.number,
+    seed: PropTypes.oneOfType([PropTypes.string,
+        PropTypes.array,
+        PropTypes.func])
 };
 
 Goljus.defaultProps = {shape: "30,30"};
